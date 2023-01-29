@@ -2,18 +2,12 @@ import React from "react";
 import { useQuery } from "react-query";
 import { Table } from "@mantine/core";
 import { ActionIcon } from "@mantine/core";
-import { useNavigate } from "react-router-dom";
 
-export default function ProductTable() {
-    const nav = useNavigate()
+export default function OrderTable() {
     const { isLoading, error, data } = useQuery("productData", () => fetch("http://localhost:7010/product").then((res) => res.json()));
 
     const addOrder = (ev) => {
       console.log(ev.SKU);
-      nav('/order',{state:{
-        cate:ev.Category,
-        product:ev.SKU
-      }})
     }
 
     if (isLoading) return "Loading...";
@@ -21,7 +15,6 @@ export default function ProductTable() {
         !!data.length &&
         data.map((element, i) => (
             <tr key={i}>
-                <td>{element["Category"]}</td>
                 <td>{element["Product Name"]}</td>
                 <td>{element.SKU}</td>
                 <td>{element.Description}</td>
@@ -58,7 +51,6 @@ export default function ProductTable() {
         <Table>
             <thead>
                 <tr>
-                    <th>Category</th>
                     <th>Product Name</th>
                     <th>SKU</th>
                     <th>Description</th>
