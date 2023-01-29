@@ -1,25 +1,17 @@
-import logo from './logo.svg';
-import './App.css';
+import ProductTable from "./component/product/ProductTable";
+import { QueryClient, QueryClientProvider } from "react-query";
+import { MantineProvider } from "@mantine/core";
+
+const queryClient = new QueryClient();
 
 function App() {
-  return (
-    <div className="App">
-      <header className="App-header">
-        <img src={logo} className="App-logo" alt="logo" />
-        <p>
-          Edit <code>src/App.js</code> and save to reload.
-        </p>
-        <a
-          className="App-link"
-          href="https://reactjs.org"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Learn React
-        </a>
-      </header>
-    </div>
-  );
+    return (
+        <MantineProvider withGlobalStyles withNormalizeCSS>
+            <QueryClientProvider client={queryClient}>
+                <ProductTable />
+            </QueryClientProvider>
+        </MantineProvider>
+    );
 }
 
 export default App;
