@@ -2,8 +2,9 @@ import React, { useEffect, useRef, useState } from "react";
 import { Button, Checkbox, createStyles, Select, Text, TextInput, Title } from "@mantine/core";
 import { DatePicker } from "@mantine/dates";
 import { useForm } from "@mantine/form";
-import { useQuery } from "react-query";
-import { useLocation } from "react-router-dom";
+import { QueryClient, useMutation, useQuery, useQueryClient } from "react-query";
+import { useLocation, useNavigate } from "react-router-dom";
+import axios from "axios";
 const useStyles = createStyles((theme) => ({
     root: {
         position: "relative",
@@ -47,7 +48,10 @@ const orderTotalCal = (productPrice, discount = 0, qty = 1, tax = 0, shippingCha
 
 export default function OrderForm() {
     const { classes } = useStyles();
+    const nav = useNavigate()
+    const queryClient = useQueryClient()
     const {state:locationState} = useLocation()
+    const [message, setMessage] = useState(null);
     const [dateValue, chageDateValue] = useState(new Date());
     const [dob, changeDob] = useState(new Date());
     const [categories, setCategories] = useState(["Electronics", "Cosmetics", "Clothing", "Medicines"]);
@@ -55,6 +59,10 @@ export default function OrderForm() {
     const [totalAmount, setTotalAmount] = useState(0);
     const [txtMsg, setTextMsg] = useState(0);
     const { isLoading, error, data } = useQuery("productData2", () => fetch("http://localhost:7010/product").then((res) => res.json()));
+    const postOrder = async (data) => {
+        return axios.post("http://localhost:7010/order",data).then(res => res).catch(res => res)
+    }
+    const {mutateAsync} = useMutation(postOrder)
 
     useEffect(() => {
         if (data) {
@@ -67,6 +75,7 @@ export default function OrderForm() {
         initialValues: {
             category: "",
             product: "",
+            productName: "",
             sku: "",
             description: "",
             price: "0",
@@ -75,12 +84,70 @@ export default function OrderForm() {
 
             shippingType: 1,
             date: "02/12/2023",
+            
+            cName: "",
+            cPhone: "",
         },
 
         validate: {
-            //   email: (value) => (/^\S+@\S+$/.test(value) ? null : 'Invalid email'),
+              category: (value) => (value ? null : 'category is required'),
+              sku: (value) => (value ? null : 'sku is required'),
+              description: (value) => (value ? null : 'description is required'),
+              price: (value) => (value ? null : 'price is required'),
+              discount: (value) => (value ? null : 'discount is required'),
+              quantity: (value) => (value ? null : 'quantity is required'),
+
+              cName: (value) => (value ? null : 'Customer Name is required'),
+              cPhone: (value) => (value ? null : 'Customer Phone is required'),
         },
     });
+    const handleSubmit = async (data) => {
+        console.log(data);
+        // return;
+        const ship = shippingInfo.find(a => a.value === data.shippingType)
+        
+        const arg = {
+            product : {
+                name: data.productName,                
+                sku: data.sku,
+                description: data.description,
+                category: data.category,
+                quantity: parseInt(data.quantity),
+                price:data.price,
+                discount:data.discount,
+                tax:txtMsg,
+                netPrice:data.price - (data.price * data.discount) / 100,
+            },
+            shipping: {
+                type: ship.type,
+                charge: ship.price,
+                estimatedDate: dateValue.toISOString().split('T')[0],
+            },
+            customer : {
+                name: data.cName,
+                DOB: dob.toISOString().split('T')[0],
+                phone: data.cPhone,
+            },
+            signatureRequired:!!data.signatureRequired,
+            receiveStausUpdate:!!data.receiveStausUpdate,
+            termsAgree:!!data.termsAgree,
+        }
+
+        try {
+            const res = await mutateAsync(arg)
+            console.log(res);
+            if(res.status === 201){
+                queryClient.invalidateQueries('orderData')
+                nav('/order-list')
+            }else {
+                setMessage(JSON.stringify(res.response.data.errors))
+                // console.log(res.response.data.errors);
+            }
+        } catch (error) {
+            console.log(error);
+        }
+
+    }
 
     useEffect(() => {
         if (data && form.values.category) {
@@ -98,6 +165,7 @@ export default function OrderForm() {
         if (data && form.values.product) {
             filteredSingleProduct = data.find((c) => c.SKU === form.values.product);
         }
+        form.setFieldValue("productName", filteredSingleProduct["Product Name"] ?? "");
         form.setFieldValue("sku", filteredSingleProduct.SKU ?? "");
         form.setFieldValue("description", filteredSingleProduct.Description ?? "");
         form.setFieldValue("price", filteredSingleProduct.Price ?? 0);
@@ -139,7 +207,10 @@ export default function OrderForm() {
     return (
         <div>
             <Title>Create Order</Title>
-            <form onSubmit={form.onSubmit((values) => console.log(values))}>
+            {!!message && <Text fz='md' c="red" style={{ marginBottom: 20 }}>
+                    {message}
+                </Text>}
+            <form onSubmit={form.onSubmit(handleSubmit)}>
                 <Text fz='md' style={{ marginTop: 20 }}>
                     Product Info
                 </Text>

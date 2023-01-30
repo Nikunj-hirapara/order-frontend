@@ -18,7 +18,8 @@ function App() {
                         <Route path='/' element={<Layout />}>
                             <Route index element={<ProductTable />} />
                             <Route path='product' element={<ProductTable />} />
-                            <Route path='order' element={<OrderForm />} />
+                            <Route path='order-create' element={<OrderForm />} />
+                            <Route path='order-list' element={<OrderTable />} />
                             <Route path='*' element={<NoPage />} />
                         </Route>
                     </Routes>

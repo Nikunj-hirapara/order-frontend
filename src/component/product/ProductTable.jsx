@@ -10,7 +10,7 @@ export default function ProductTable() {
 
     const addOrder = (ev) => {
       console.log(ev.SKU);
-      nav('/order',{state:{
+      nav('/order-create',{state:{
         cate:ev.Category,
         product:ev.SKU
       }})

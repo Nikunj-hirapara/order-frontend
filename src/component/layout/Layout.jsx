@@ -5,7 +5,8 @@ import { Container } from "@mantine/core";
 
 const linkData = [
     { link: "/product", label: "Product" },
-    { link: "/order", label: "order" },
+    { link: "/order-create", label: "Add Order" },
+    { link: "/order-list", label: "Order List" },
 ];
 
 const Layout = () => {
